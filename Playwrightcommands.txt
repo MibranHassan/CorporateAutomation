@@ -1,0 +1,23 @@
+Install-) npm init playwright@latest
+
+Run Commands:
+npx playwright test
+npx playwright test --headed
+npx playwright test --ui
+npx playwright codegen https://playwright.dev/(URL Optional)
+npx playwright test --project webkit
+npx playwright test --project webkit --project firefox(Multiple Browser)
+npx playwright test landing-page.spec.ts(single file)
+npx playwright test tests/todo-page/ tests/landing-page/(run a set of test files from different directories)
+npx playwright test landing login(To run files that have landing or login in the file name)
+npx playwright test -g "add a todo item"(To run a test with a specific title)
+npx playwright test --last-failed(To run last failed test)
+PlayWright test for vs code extension(through this test can be run from UI)
+npx playwright test --debug(Playwright Inspector)
+npx playwright test --trace on(--trace tells it to record a detailed trace of your test so you can replay and see what happened step-by-step in a visual viewer)
+
+npx playwright show-report
+
+
+Interaction(Const, await, Locators), Actions, Assertions(expect, Soft, Hard), Test Isolation, Using Test Hooks(works as an TestNg)
+
