@@ -1,5 +1,6 @@
 import { test, expect} from '../utils/testSetup';
 import { typeofLC } from '../data/testData';
+import fs from 'fs';
 
 test('navigate to Initiate Letter of Credit', async ({ page }) => {
   test.setTimeout(60000); 
@@ -22,6 +23,7 @@ test('navigate to Initiate Letter of Credit', async ({ page }) => {
     await page.locator('[id="applicantAddressline1\\|input"]').fill('Gulshan-e-Iqbal');
     await page.locator('[id="applicantAddressline2\\|input"]').fill('Karachi');
     await page.locator('[id="applicantAddressline3\\|input"]').fill('Pakistan');
+    await page.locator('#oj-select-choice-applicantCountry').waitFor({ state: 'visible' });
     await page.locator('#oj-select-choice-applicantCountry').click();
     await page.locator('li').filter({ hasText: 'India' }).first().click();
     await page.getByRole('radio', { name: 'Transferable', exact: true }).check();
@@ -90,7 +92,6 @@ test('navigate to Initiate Letter of Credit', async ({ page }) => {
     await page.locator('[id="CreditDaysFrom2667393\\|input"]').fill('2');
     await page.locator('[id="DraweeBank1492631\\|input"]').fill('2');
     await page.locator('[id="draftAmount\\|input"]').fill('1000');
-    await page.locator('.oj-form > div:nth-child(14)').click();
    }
    await page.screenshot({ path: 'Screenshots/LC_Details.png', fullPage: true });
    await page.getByRole('button', { name: 'Next' }).click();
@@ -118,7 +119,7 @@ test('navigate to Initiate Letter of Credit', async ({ page }) => {
     await page.getByRole('gridcell', { name: `${currentYear}` }).click();
     await page.getByRole('button', { name: currentMonth }).click();
     await page.getByRole('gridcell', { name: currentMonth }).click();
-    await page.getByRole('gridcell', { name: '15' }).click();
+    await page.getByRole('gridcell', { name: '21' }).click();
    }else if(typeofLC.Shipment == 'Period'){
     await page.getByRole('radio', { name: 'Period' }).check();
     await page.locator('[id="ShipmentPeriod15\\|input"]').fill('15 Days');
@@ -136,7 +137,9 @@ test('navigate to Initiate Letter of Credit', async ({ page }) => {
    await page.getByRole('button', { name: 'Next' }).click();
 
    // Documents and Conditions
+   await page.getByRole('textbox').first().waitFor({state: 'visible'});
    await page.getByRole('textbox').first().fill('Goods Description');
+   await page.getByRole('textbox').nth(1).waitFor({state: 'visible'});
    await page.getByRole('textbox').nth(1).fill('Documents Description');
    await page.getByRole('textbox').nth(2).fill('Additional Conditions');
    function stripTime(dateString: string): Date {
@@ -163,6 +166,97 @@ test('navigate to Initiate Letter of Credit', async ({ page }) => {
    await page.getByRole('button', { name: 'Next' }).click();
 
    //Instruction Tab
+   if(typeofLC.Advisingbank == 'Swift'){
+    await page.getByRole('radio', { name: 'Swift Code' }).check();
+    await page.locator('[id="advBankSwiftCode\\|input"]').fill('CITIUS33');
+    await page.getByRole('button', { name: 'Verify' }).click();
+   }else{
+    await page.getByRole('radio', { name: 'Name and Address' }).check();
+    await page.getByRole('textbox', { name: 'Name' }).fill('Advising Bank Name');
+    await page.getByRole('textbox', { name: 'Address' }).fill('Advising Bank Address 1');
+    await page.locator('[id="AddressLine283\\|input"]').fill('Advising Bank Address 2');
+    await page.locator('[id="AddressLine33\\|input"]').fill('Advising Bank Address 3');
+   }
+   await page.getByRole('textbox', { name: 'Special Payment Conditions for Beneficiary' }).fill('Special Payment For Bene');
+   await page.getByRole('textbox', { name: 'Special Payment Conditions for Bank Only' }).fill('Special Payment For Bank');
+   
+   if(typeofLC.ConfirmationInstruction == 'Confirm'){
+    if(typeofLC.ConfirmationInstructionParty == 'Swift'){
+    await page.getByRole('radio', { name: 'Confirm', exact: true }).check();
+    await page.getByRole('combobox', { name: 'Requested Confirmation Party' }).locator('a').waitFor({state: 'visible'});
+    await page.getByRole('combobox', { name: 'Requested Confirmation Party' }).locator('a').click();
+    await page.locator('li').filter({ hasText: 'Advise Through Bank' }).click();
+    await page.locator('#RequestedConfirmationPartyDescription46 span').filter({ hasText: 'Swift Code' }).first().click();
+    await page.getByRole('textbox', { name: 'Swift Code' }).fill('CITIUS33');
+    await page.getByRole('button', { name: 'Verify' }).click();
+  }else{
+    await page.getByRole('radio', { name: 'Bank Address' }).check();
+    await page.getByRole('textbox', { name: 'Bank Name' }).click();
+    await page.locator('[id="Address17\\|input"]').click();
+    await page.locator('[id="AddressLine253\\|input"]').click();
+    await page.locator('[id="AddressLine367\\|input"]').click();
+  }
+   }else if(typeofLC.ConfirmationInstruction == 'May Confirm'){
+    await page.getByRole('radio', { name: 'May Confirm' }).check();
+    if(typeofLC.ConfirmationInstructionParty == 'Swift'){
+      await page.getByRole('radio', { name: 'Confirm', exact: true }).check();
+      await page.getByRole('combobox', { name: 'Requested Confirmation Party' }).locator('a').click();
+      await page.locator('li').filter({ hasText: 'Advise Through Bank' }).click();
+      await page.locator('#RequestedConfirmationPartyDescription46 span').filter({ hasText: 'Swift Code' }).first().click();
+      await page.getByRole('textbox', { name: 'Swift Code' }).fill('CITIUS33');
+      await page.locator('div').filter({ hasText: /^Verify$/ }).nth(3).click();
+    }else{
+      await page.getByRole('radio', { name: 'Bank Address' }).check();
+      await page.getByRole('textbox', { name: 'Bank Name' }).click();
+      await page.locator('[id="Address17\\|input"]').click();
+      await page.locator('[id="AddressLine253\\|input"]').click();
+      await page.locator('[id="AddressLine367\\|input"]').click();
+    }
+   }else if(typeofLC.ConfirmationInstruction == 'Without'){
+    await page.getByRole('radio', { name: 'Without' }).check();
+   }
+   else{
+    console.log('You have choosen Without Confirmation Instruction')
+   }
+   await page.getByRole('textbox', { name: 'Sender to Receiver Information' }).fill('Sender to Receiver');
+   await page.getByRole('textbox', { name: 'Charges' }).fill('Charges');
+   await page.screenshot({ path: 'Screenshots/Instruction.png', fullPage: true });
+   await page.getByRole('button', { name: 'Next' }).click();
+
+   //Attachment
+ // Wait for the input[type="file"] to appear
+// const fileInput = await page.locator('input[type="file"]');
+// Upload multiple files (make sure to escape backslashes in Windows paths)
+// console.log(fs.existsSync('C:/Users/Mibran/Desktop/sample document format/pdf.pdf'));
+// console.log('path1', 'C:\\Users\\Mibran\\Desktop\\sample document format\\PNG File.png');
+
+if (typeofLC.IsAttachmnet == 'Yes') {
+   await page.locator('div').filter({ hasText: /^Drop files here or click here to Add Files$/ }).first().click();
+await page.waitForSelector('oj-file-picker input[type="file"]');
+await page.setInputFiles('oj-file-picker input[type="file"]', [
+  'C:/Users/Mibran/Desktop/sample document format/pdf.pdf',
+  'C:/Users/Mibran/Desktop/sample document format/PNG File.png'
+]);
+}
+  
+if (typeofLC.SaveasTemplate == 'Yes') {
+  await page.getByRole('radio', { name: 'Yes' }).check();
+  // await page.locator('span').filter({ hasText: 'Yes' }).nth(1).click();
+  await page.getByRole('radio', { name: 'Public' }).check();
+  await page.getByRole('textbox', { name: 'Template Name' }).fill('Automatedtest');
+  // await page.getByRole('link', { name: '' }).click();
+  await page.locator('#save10').click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+}
+  await page.locator('#AcceptTermsandConditions100 span').nth(1).click();
+  await page.screenshot({ path: 'Screenshots/AttachmentTab.png', fullPage: true });
+  await page.getByRole('button', { name: 'Submit' }).click();
+
+  //Review SS
+  await page.waitForURL('http://172.20.3.151:7777/?page=review-letter-of-credit');
+  await page.locator('div').filter({ hasText: /^Attachments$/ }).first().click();
+  await page.screenshot({ path: 'Screenshots/ReviewScreen.png', fullPage: true });
+
    }else if(typeofLC.LCType == 'RetryLC'){
    await page.getByRole('button', { name: 'Retry LC' }).click();
    }else if(typeofLC.LCType == 'Template'){
